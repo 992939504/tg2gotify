@@ -1,0 +1,8 @@
+# 主程序：Telethon（用户账号监听）+ python-socks（代理）+ requests（推 Gotify）
+telethon>=1.36,<2
+python-socks[asyncio]>=2.4.4
+requests>=2.31
+# 网页端 TG 登录 / 终端扫码登录（画二维码）用；不装也能用「验证码登录」
+qrcode>=7.4
+# 可选：Telethon 加密加速（有预编译 wheel；装不上直接忽略，不影响功能）
+# cryptg>=0.4

@@ -1,0 +1,35 @@
+{
+  "API_ID": 0,
+  "API_HASH": "在此填写你的_api_hash",
+  "SESSION_NAME": "tg2gotify",
+  "PROXY": {
+    "enabled": true,
+    "type": "socks5",
+    "host": "127.0.0.1",
+    "port": 7890
+  },
+  "GOTIFY_URL": "http://192.168.1.100:8080",
+  "GOTIFY_TOKEN": "在此填写 Gotify 应用 token",
+  "GOTIFY_PRIORITY": 8,
+  "SEND_STARTUP_TEST": true,
+  "KEYWORD_POOL": ["补货", "restock", "stock"],
+  "SOURCES": {
+    "some_channel": {
+      "label": "示例频道（走关键词过滤）",
+      "enabled": true,
+      "use_pool": true,
+      "extra_keywords": [],
+      "exclude_keywords": []
+    },
+    "some_bot": {
+      "label": "示例机器人（全量转发）",
+      "enabled": true,
+      "use_pool": false,
+      "extra_keywords": [],
+      "exclude_keywords": ["广告"]
+    }
+  },
+  "HEARTBEAT_MINUTES": 30,
+  "WEBUI_TOKEN": "",
+  "WEBUI_PORT": 8098
+}

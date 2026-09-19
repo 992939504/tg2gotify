@@ -1,0 +1,21 @@
+[Unit]
+Description=TG2Gotify WebUI - 配置界面（局域网使用）
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tg2gotify
+ExecStart=/opt/tg2gotify/venv/bin/python /opt/tg2gotify/webui.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+# 资源硬上限：防内存泄漏拖垮整机（常驻约 30-60MB；跑 TG 登录流程时会临时高一些）
+MemoryHigh=150M
+MemoryMax=256M
+CPUQuota=30%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

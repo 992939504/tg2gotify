@@ -1,0 +1,21 @@
+[Unit]
+Description=TG2Gotify v2 - Telegram channel monitor -> Gotify
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tg2gotify
+ExecStart=/opt/tg2gotify/venv/bin/python /opt/tg2gotify/tg2gotify.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+# 资源硬上限：防内存泄漏拖垮整机（可按机器情况调整；正常常驻约 40-60MB）
+MemoryHigh=150M
+MemoryMax=256M
+CPUQuota=30%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target
