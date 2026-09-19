@@ -24,7 +24,7 @@ GitHub 上 TG → Gotify 方向没有现成项目（搜到的全是反方向的 
 - [文件结构](#文件结构)
 - [快速开始](#快速开始debian--ubuntu)
 - [配置说明](#配置说明)
-- [WebUI 使用](#webui-使用可选)
+- [WebUI 使用](#webui-使用)
 - [通知渠道（Gotify）](#通知渠道gotify)
 - [功能清单（验收对照）](#功能清单预期行为验收对照)
 - [明确不做 / 已知边界](#明确不做--已知边界)
@@ -98,88 +98,85 @@ LICENSE                 # MIT
 
 ## 快速开始（Debian / Ubuntu）
 
-### 1. 准备
+> **一句话流程**：装依赖 → 填两个必填项 → 起 WebUI → 打开网页按提示一步步配 → 启动监控。
+> 除了 `API_ID` / `API_HASH`（要在 my.telegram.org 申请，只能先填进文件），
+> 代理、Gotify、关键词池、监听频道、TG 登录，**全都在网页上点出来**。
+
+### 1. 安装
 
 ```bash
-sudo apt install python3 python3-venv
+sudo apt install python3 python3-venv git
 git clone https://github.com/992939504/tg2gotify.git /opt/tg2gotify
 cd /opt/tg2gotify
-/usr/bin/python3 -m venv venv          # 本机裸 python3 -m venv 会报错时用绝对路径
+/usr/bin/python3 -m venv venv          # 本机裸 python3 -m venv 报错时就用绝对路径
 ./venv/bin/pip install -r requirements.txt
 ```
 
-### 2. 配置
+### 2. 填两个必填项（唯一需要手动编辑配置的地方）
 
 ```bash
 cp config.example.json config.json
-vi config.json
+vi config.json        # 只填这两项：
 ```
 
-必填：
+- `API_ID` / `API_HASH`：去 [my.telegram.org](https://my.telegram.org) → API development tools 拿
+- 其余字段（`GOTIFY_*`、`PROXY`、`KEYWORD_POOL`、`SOURCES`）**留空/默认就行**，下一步在网页里填
 
-- `API_ID` / `API_HASH`：在 [my.telegram.org](https://my.telegram.org) 申请（API development tools 页面）
-- `GOTIFY_URL` / `GOTIFY_TOKEN`：你的 Gotify 地址 + 应用 token
-  （Gotify 网页端 → **Apps** → **CREATE APPLICATION** → 复制那串 token）
-- `PROXY`：中国网络环境默认 `socks5://127.0.0.1:7890`（Clash / Mihomo / ShellCrash 常用端口）；
-  海外服务器把 `enabled` 改成 `false`
-- `KEYWORD_POOL` / `SOURCES`：见[配置说明](#配置说明)
-
-### 3. 首次登录（二选一）
-
-**A. 网页登录（推荐，扫码或验证码都行）**——先起 WebUI：
+### 3. 起 WebUI（配置界面）
 
 ```bash
-./venv/bin/python webui.py     # 默认 8098；首次启动自动生成访问令牌并打印在终端
+./venv/bin/python webui.py      # 默认 8098；首次启动会自动生成访问令牌并打印在终端
 ```
 
-浏览器打开 `http://<服务器IP>:8098/` → 用令牌登录 → 点「📱 TG 登录 / 重新登录」→
-扫码（手机 TG → 设置 → 设备 → 链接桌面设备）或填手机号收验证码（开了两步验证会再要密码）。
+### 4. 打开网页，从上往下点一遍
 
-**B. 终端扫码**：
+浏览器打开 `http://<服务器IP>:8098/` → 粘贴终端里那串访问令牌登录 → 按这 6 步走：
 
-```bash
-./venv/bin/python qr_login.py
-```
+| # | 页面上点哪里 | 做什么 |
+|---|---|---|
+| 1 | **🌐 出站代理** | 国内服务器填 `socks5` + `127.0.0.1` + 代理端口（Clash / Mihomo / ShellCrash 一般是 7890）；海外服务器选「直连」 |
+| 2 | **📣 通知渠道** | 填 Gotify 地址（如 `http://192.168.1.100:8080`）+ 应用 Token（Gotify 网页 → Apps → CREATE APPLICATION）→ 点「📤 发一条测试推送」，手机上收到就说明通了 |
+| 3 | **📚 共享关键词池** | 一行一个关键词。盯 VPS 补货可以填：`补货` `上架` `促销` `特价` `优惠码` `闪购` `限时` …… |
+| 4 | **📺 监听频道** | 「➕ 新增监控频道」→ 填频道 username（直接粘 `https://t.me/xxx` 链接也行）→ 勾上「启用」+「走关键词过滤」（想全量转发就取消勾选）→ 想更细可以再加私有词 / 排除词 |
+| 5 | **🔌 运行状态 → 📱 TG 登录** | 点进去扫码登录（手机 TG → 设置 → 设备 → 链接桌面设备），或填手机号收验证码；开了两步验证会再要一次密码 |
+| 6 | **🔌 运行状态 → ▶ 启动后端** | 回到配置页点「启动后端」——看到绿字「✅ 后端程序：运行中」就说明已经在盯了 |
 
-终端显示二维码 → 手机扫码确认。登录成功后 session 文件已保存，以后免登录。
+> 每一栏填完点底部 **「保存全部」** 即可，主程序 **5 秒内热重载**，不用重启、不断线。
+> 只有 `API_ID` / `API_HASH`、代理、`SESSION_NAME` 这几项是启动时读的，改完要重启服务。
 
-> 同一个 Telegram session **不能两处同时用**：网页登录前请先停掉后端监控
-> （WebUI 的「运行状态」里有「⏹ 停止后端」按钮，或者 `systemctl stop tg2gotify`）。
-
-### 4. 试运行
-
-```bash
-./venv/bin/python tg2gotify.py
-```
-
-看到「出站代理」「已登录」「开始监听」即成功；默认会发一条启动测试推送（`SEND_STARTUP_TEST` 可关）。
-
-### 5. systemd 常驻
+### 5. 让它常驻（systemd，推荐）
 
 ```bash
-sudo cp tg2gotify.service /etc/systemd/system/
+sudo cp tg2gotify.service tg2gotify-webui.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now tg2gotify
-journalctl -u tg2gotify -f       # 看日志
+sudo systemctl enable --now tg2gotify tg2gotify-webui
+journalctl -u tg2gotify -f        # 看日志
 ```
 
-模板里带了资源硬上限（`MemoryHigh=150M` / `MemoryMax=256M` / `CPUQuota=30%` / `TasksMax=64`），
-常驻实际占用约 40–60 MB，可按机器情况调。
+两个单元都带了资源硬上限（`MemoryHigh=150M` / `MemoryMax=256M` / `CPUQuota=30%` / `TasksMax=64`），
+常驻占用约 40–60 MB + 30 MB 左右，可按机器情况调。
 
-### 6. WebUI 常驻（可选）
+装好之后，网页上的「▶ 启动后端 / ⏹ 停止后端」就是在操作这个 systemd 服务；
+配置页的运行状态卡还会实时告诉你后端是不是 systemd 在管（不是的话会直接把注册命令列出来）。
 
-仓库里带了一份单元文件 `tg2gotify-webui.service`（已设好内存 / CPU 上限）：
-```bash
-sudo cp tg2gotify-webui.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now tg2gotify-webui
-```
+> WebUI 是**局域网工具**：绑 `0.0.0.0:8098`、令牌认证、能启停后端进程。只建议内网使用；
+> 非要暴露公网请务必换强令牌 + 反向代理 + HTTPS。
+> 内网用的话，建议反代一个域名（如 `tg.home`）代替 `IP:8098` —— 换地址访问会各算一个源、登录态不通用。
 
-> WebUI 是**局域网工具**：绑 `0.0.0.0:8098`、token 认证、能启停后端进程。
-> 只建议内网使用；非要暴露公网请务必换强令牌 + 反向代理 + HTTPS。
->
-> 配置页的「🔌 运行状态」卡里也会实时告诉你是谁在管这个后端：
-> **systemd 管理**（开机自启）还是**网页/命令行拉起的**（重启机器不会自己回来，同时给出上面的注册命令）。
+### 6. 以后改配置
+
+网页上改完点「保存全部」就行（5 秒内生效）。只有 `API_ID` / `API_HASH`、代理、`SESSION_NAME`
+需要改完 `systemctl restart tg2gotify`。
+
+### 附：不想用网页？
+
+- **终端扫码登录**：`./venv/bin/python qr_login.py`（手机扫码，不需要浏览器）
+- **纯命令行跑**：`./venv/bin/python tg2gotify.py`，看到「出站代理」「已登录」「开始监听」即成功
+  （默认会发一条启动测试推送，`SEND_STARTUP_TEST` 可关）
+- **手工编辑配置**：字段含义见下面的[配置说明](#配置说明)
+
+> 同一个 Telegram session **不能两处同时用**：网页登录前请先停掉正在跑的后端
+> （配置页有「⏹ 停止后端」，或 `systemctl stop tg2gotify`）。网页登录守卫会自动拦住这种情况。
 
 ---
 
@@ -187,20 +184,20 @@ sudo systemctl enable --now tg2gotify-webui
 
 ### 字段速查
 
-| 字段 | 必填 | 说明 |
-|---|---|---|
-| `API_ID` / `API_HASH` | ✅ | my.telegram.org 申请 |
-| `GOTIFY_URL` | ✅ | 如 `http://192.168.1.100:8080`（也可写内网域名，要带 `http://`） |
-| `GOTIFY_TOKEN` | ✅ | Gotify 应用 token（WebUI 里也能改） |
-| `GOTIFY_PRIORITY` | | 推送优先级，默认 8（0–10，见[通知渠道](#通知渠道gotify)） |
-| `SEND_STARTUP_TEST` | | 默认 true，启动发一条测试推送 |
-| `KEYWORD_POOL` | | 共享关键词池（数组） |
-| `SOURCES` | ✅ | 监听来源，见下面的过滤规则 |
-| `PROXY` | | `{enabled, type: socks5/socks4/http, host, port}`，默认 `socks5://127.0.0.1:7890` |
-| `SESSION_NAME` | | session 文件名，默认 `tg2gotify` |
-| `HEARTBEAT_MINUTES` | | 日志心跳间隔，默认 30（热重载生效，下限钳到 1） |
-| `WEBUI_TOKEN` | | WebUI 访问令牌（留空则 `webui.py` 首启自动生成并打印） |
-| `WEBUI_PORT` | | WebUI 端口，默认 8098 |
+| 字段 | 必填 | 哪里填 | 说明 |
+|---|---|---|---|
+| `API_ID` / `API_HASH` | ✅ | 只能手改 `config.json` | 去 my.telegram.org 申请（API development tools 页面） |
+| `GOTIFY_URL` | ✅ | 网页：📣 通知渠道 | 如 `http://192.168.1.100:8080`（也可写内网域名，要带 `http://`） |
+| `GOTIFY_TOKEN` | ✅ | 网页：📣 通知渠道 | Gotify 应用 token（Gotify 网页 → Apps → CREATE APPLICATION） |
+| `GOTIFY_PRIORITY` | | 网页：📣 通知渠道 | 推送优先级，默认 8（0–10，见[通知渠道](#通知渠道gotify)） |
+| `PROXY` | | 网页：🌐 出站代理 | `{enabled, type: socks5/socks4/http, host, port}`，默认 `socks5://127.0.0.1:7890` |
+| `KEYWORD_POOL` | | 网页：📚 共享关键词池 | 共享关键词池（数组） |
+| `SOURCES` | ✅ | 网页：📺 监听频道 | 监听来源，见下面的过滤规则 |
+| `SEND_STARTUP_TEST` | | 只能手改 `config.json` | 默认 true，启动发一条测试推送 |
+| `SESSION_NAME` | | 只能手改 `config.json` | session 文件名，默认 `tg2gotify` |
+| `HEARTBEAT_MINUTES` | | 只能手改 `config.json` | 日志心跳间隔，默认 30（热重载生效，下限钳到 1） |
+| `WEBUI_TOKEN` | | 只能手改 `config.json` | WebUI 访问令牌（留空则 `webui.py` 首启自动生成并打印） |
+| `WEBUI_PORT` | | 只能手改 `config.json` | WebUI 端口，默认 8098 |
 
 页面（WebUI）只会改 `KEYWORD_POOL` / `SOURCES` / `PROXY` / `GOTIFY_*` 这几个字段，
 **其余字段（`API_ID`、`API_HASH`、`SESSION_NAME`、`WEBUI_TOKEN`、`SEND_STARTUP_TEST`、
@@ -260,7 +257,7 @@ sudo systemctl enable --now tg2gotify-webui
 
 ---
 
-## WebUI 使用（可选）
+## WebUI 使用
 
 浏览器打开 `http://<服务器IP>:8098/`，用 `WEBUI_TOKEN` 登录
 （也可以直接访问 `http://<ip>:8098/login?token=xxx`）。
